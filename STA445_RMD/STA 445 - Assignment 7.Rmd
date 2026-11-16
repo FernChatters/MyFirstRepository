@@ -1,0 +1,181 @@
+---
+title: "STA 445 - Assignment 7"
+author: "Fern Chatters"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(cowplot)
+library(broom)
+library(latex2exp)
+library(dplyr)
+```
+
+# Exercises
+
+## Exercise 2
+
+Using the `datasets::trees` data, complete the following. This question refreshes create a linear model, graphing the linear model, and introduces using some LaTeX expressions on the graph.
+
+**a)** Create a regression model for $y=$ `Volume` as a function of $x=$ `Height`.
+
+```{r}
+data('trees', package = 'datasets')
+
+model.trees <- lm(Volume ~ Height, data = trees) 
+```
+
+After importing the trees data from the "datasets" package in R, I created a regression model for Volume as a function of Height.
+
+**b)** Display the `summary` of the  model to view the y-intercept and slope of the regression line.
+
+```{r}
+summary(model.trees)
+```
+
+Using the summary() function, we can view the y-intercept and slope of the regression sign.
+
+**c)** Using `ggplot2`, create a scatter plot of Volume vs Height. 
+
+```{r}
+ggplot(data = trees,
+       aes(x = Height, y = Volume)) + 
+  geom_point()
+```
+
+Using ggplot, I graphed a scatter plot of Volume vs. Height.
+
+**d)** Color the scatter using the `Girth` variable.
+
+```{r}
+ggplot(data = trees,
+       aes(x = Height, y = Volume, color = Girth)) + 
+  geom_point()
+```
+
+Next, I colored the points of the scatter plot using the Girth variable.
+
+**e)** Modify the color scheme using a RColorBrewer palette.
+
+```{r}
+ggplot(data = trees,
+       aes(x = Height, y = Volume, color = Girth)) +
+  geom_point() + 
+  scale_colour_continuous(palette = "Spectral")
+```
+
+Next, I changed the color scheme to the RColorBrewer palette "Spectral".
+
+**f)** Create a nice white filled rectangle to add text information. The following might be useful.
+
+```{r}
+ggplot(data = trees,
+       aes(x = Height, y = Volume, color = Girth)) +
+  geom_point() + 
+  scale_colour_continuous(palette = "Spectral") + 
+  annotate('rect', xmin=65, xmax=75, ymin=60, ymax=74,
+         fill='white', color='black')
+```
+
+Next, I added a white text box using annotate() to display future text.
+
+**g)** Use the `broom` package to extract the coefficients of the best-fit line. Add this information as an annotation to the graph, which should follow a form that looks like $\hat{y}_i = (INTERCEPT) + (SLOPE)* x_i$. Place the annotation within the white text box.
+
+```{r}
+tidy(model.trees)
+
+ggplot(data = trees,
+       aes(x = Height, y = Volume, color = Girth)) +
+  geom_point() + 
+  scale_colour_continuous(palette = "Spectral") + 
+  annotate('rect', xmin=65, xmax=75, ymin=60, ymax=74,
+         fill='white', color='black') + 
+  annotate("text", label = TeX("$\\hat{y}_i = (-87.12361) + (1.54335)* x_i$"), 
+         x = 70, y = 67, size = 3.3, color = 'grey3')
+```
+
+Next, after extracting the coefficients of the best-fit line, I added the y-intercept and slope information as an annotation to the graph within the white box.
+
+**h)** Use the `broom` package to extract the coefficient of determination $r^2$ from the model. Add the annotation to your graph, which should look something like $R^2 = (VALUE)$
+
+```{r}
+glance(model.trees)
+
+ggplot(data = trees,
+       aes(x = Height, y = Volume, color = Girth)) +
+  geom_point() + 
+  scale_colour_continuous(palette = "Spectral") + 
+  annotate('rect', xmin=65, xmax=75, ymin=60, ymax=74,
+           fill='white', color='black') + 
+  annotate("text", label = TeX("$\\hat{y}_i = (-87.12361) + (1.54335)* x_i$"), 
+           x = 70, y = 70, size = 3.3, color = 'grey3') +
+  annotate("text", label = TeX("$R^2 = (0.3579026)$"),
+           x = 70, y = 64, size = 3.3, color = 'grey3')
+```
+
+Next, after extracting the coefficient of determination from the regression model, I added the R-squared value as an annotation to the graph also within the white box.
+
+**i)** Add the regression line in red. There are several ways to do this.
+
+```{r}
+trees <- augment(model.trees, trees, interval='confidence')
+trees <- trees %>% select(c("Girth", "Height", "Volume", ".fitted"))
+head(trees)
+
+ggplot(data = trees,
+       aes(x = Height, y = Volume, color = Girth)) +
+  geom_point() + 
+  geom_line(aes(y = .fitted), color = "red") +
+  scale_colour_continuous(palette = "Spectral") + 
+  annotate('rect', xmin=65, xmax=75, ymin=60, ymax=74,
+           fill='white', color='black') + 
+  annotate("text", label = TeX("$\\hat{y}_i = (-87.12361) + (1.54335)* x_i$"), 
+           x = 70, y = 70, size = 3.3, color = 'grey3') +
+  annotate("text", label = TeX("$R^2 = (0.3579026)$"),
+           x = 70, y = 64, size = 3.3, color = 'grey3')
+```
+
+First, I used augment to add the regression model information to our original data frame and then selected the original columns and the .fitted column. Next, I plotted the same scatter plot from above, but added a geom_text() layer for the regression line in red.
+
+**j)** Properly label the axes of the graph.
+
+```{r}
+ggplot(data = trees,
+       aes(x = Height, y = Volume, color = Girth)) +
+  geom_point() + 
+  geom_line(aes(y = .fitted), color = "red") +
+  scale_colour_continuous(palette = "Spectral") + 
+  annotate('rect', xmin=65, xmax=75, ymin=60, ymax=74,
+           fill='white', color='black') + 
+  annotate("text", label = TeX("$\\hat{y}_i = (-87.12361) + (1.54335)* x_i$"), 
+           x = 70, y = 70, size = 3.3, color = 'grey3') +
+  annotate("text", label = TeX("$R^2 = (0.3579026)$"),
+           x = 70, y = 64, size = 3.3, color = 'grey3') +
+  labs(x = "Height (ft)", y = "Volume (cubic ft)", color = "Girth (in)")
+```
+
+Next, I labeled the axes and color legend of the graph using labs().
+
+**k)** Add a descriptive title to the graph.
+
+```{r}
+ggplot(data = trees,
+       aes(x = Height, y = Volume, color = Girth)) +
+  geom_point() + 
+  geom_line(aes(y = .fitted), color = "red") +
+  scale_colour_continuous(palette = "Spectral") + 
+  annotate('rect', xmin=65, xmax=75, ymin=60, ymax=74,
+           fill='white', color='black') + 
+  annotate("text", label = TeX("$\\hat{y}_i = (-87.12361) + (1.54335)* x_i$"), 
+           x = 70, y = 70, size = 3.3, color = 'grey3') +
+  annotate("text", label = TeX("$R^2 = (0.3579026)$"),
+           x = 70, y = 64, size = 3.3, color = 'grey3') +
+  labs(title = "Black Cherry Tree Volume vs. Height with Best-Fit Line and R^2 Value",
+       x = "Height (ft)", y = "Volume (cubic ft)", color = "Girth (in)")
+```
+
+Lastly, I added a descriptive title to the graph within the labs() layer.
+

@@ -1,0 +1,157 @@
+---
+title: "STA 445 - Assignment 6"
+author: "Fern Chatters"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(forcats)
+library(tidyr)
+```
+
+# Exercises
+
+Many of the exercises below build and solidify our data wrangling skills that rely on the use of operations taught in Chapter 4 and Chapter 7. This is a great time to review those chapters if you have not been using the syntax frequently. The exercises below have been written in a way that YOU must do all the data wrangling yourself - the time for providing lots of code to help you over the hump is over - your data science wrangling skills start now!
+
+## Exercise 1
+
+A common task is to take a set of data that has multiple categorical variables and create a table of the number of cases for each combination. An introductory statistics textbook contains a data set summarizing student surveys from several sections of an intro class. The two variables of interest are `Gender` and `Year` which are the students gender and year in college. *Note: you will need to refer to Chapter 4 and Chapter 7 for some of the operations needed below - this is a great time to review chapter 4!*
+
+**a)** Download the data set using the following:
+
+```{r}
+Survey <- read.csv('https://www.lock5stat.com/datasets2e/StudentSurvey.csv', na.strings=c('',' ')) 
+```
+
+**b)** Select the specific columns of interest **Year** and **Gender**
+
+```{r}
+Survey <- Survey %>% select(c('Year', 'Gender'))
+head(Survey)
+```
+
+Using the select() function, I selected just the Year and Gender columns for data analysis.
+
+**c)** Convert the **Year** column to factors and properly order the factors based on common US progression (FirstYear - Sophomore - Junior - Senior)
+
+```{r}
+Survey$Year <- as.factor(Survey$Year)
+Survey <- Survey %>% 
+  mutate(Year = fct_relevel(Year, 'FirstYear', 'Sophomore', 'Junior', 'Senior'))
+table(Survey$Year)
+```
+
+After converting the Year column to a factor, I reordered the levels of the Year factor to the common U.S. progression using fct_relevel().
+
+**d)** Convert the **Gender** column to factors and rename them Male/Female.
+
+```{r}
+Survey$Gender <- as.factor(Survey$Gender)
+Survey <- Survey %>%
+  mutate(Gender = ifelse(Gender == 'M', 'Male', 'Female'))
+table(Survey$Gender)
+```
+
+After converting the Gender column to a factor, I renamed the levels of the Gender factor to "Male" and "Female" using ifelse().
+
+**e)** Produce a data set with eight rows and three columns that contains the number of responses for each gender:year combination. *You might want to look at the following functions: `dplyr::count` and `dplyr::drop_na`.*
+
+```{r}
+Responses <- Survey %>% count(Year, Gender) %>% drop_na()
+Responses
+```
+
+Using count(), I was able to produce a new table that contains the number of responses for each gender:year combination. Then, I used drop_na() to erase any combinations that included no responses.
+
+**f)** Pivot the table in part (e) to produce a table of the number of responses in the following form:
+        
+|   Gender    |  First Year  |  Sophomore  |  Junior   |  Senior   |
+|:-----------:|:------------:|:----------:|:---------:|:---------:|
+|  **Female** |              |            |           |           |  
+|  **Male**   |              |            |           |           | 
+
+```{r}
+Responses.wide <- Responses %>% pivot_wider(names_from = Year, values_from = n)
+Responses.wide
+```
+
+Lastly, I converted my table to wide format using pivot_wider so that each year was a different column.
+
+
+## Exercise 3 
+
+For this problem we will consider two simple data sets.
+
+```{r}
+A <- tribble(
+  ~Name, ~Car,
+  'Alice', 'Ford F150',
+  'Bob',   'Tesla Model III',
+  'Charlie', 'VW Bug')
+
+B <- tribble(
+  ~First.Name, ~Pet,
+  'Bob',  'Cat',
+  'Charlie', 'Dog',
+  'Alice', 'Rabbit')
+```
+
+**a)** Combine the data frames together to generate a data set with three rows and three columns using `join` commands. 
+
+```{r}
+full_join(A, B, by = c("Name" = "First.Name"))
+```
+
+I joined the two data frames together by the Name column using full_join() so that all rows of A and B were included.
+
+**b)** It turns out that Alice also has a pet guinea pig. Add another row to the `B` data set. Do this using either the base function `rbind`, or either of the `dplyr` functions `add_row` or `bind_rows`.
+
+```{r}
+B <- B %>% 
+  add_row(First.Name = 'Alice', Pet = 'Guinea Pig')
+B
+```
+
+I added another row to the B data frame using add_row() where the First Name was Alice, and the Pet was a guinea pig.
+
+**c)** Combine again the `A` and `B` data sets together to generate a data set with four rows and three columns using `join` commands.
+
+```{r}
+full_join(A, B, by = c("Name" = "First.Name"))
+```
+
+Again, I joined the two data frames together by the Name column using full_join() so that all rows of A and B were included. This resulted in there being two rows with Alice as the Name.
+
+*Note: You may want to also try using `cbind` to address questions (a) and (c). Leave this as a challenge question and focus on the easier to use `join` functions introduced in this chapter.*
+
+
+## Exercise 4
+
+The package `nycflights13` contains information about all the flights that arrived in or left from New York City in 2013. This package contains five data tables, but there are three data tables we will work with. The data table `flights` gives information about a particular flight, `airports` gives information about a particular airport, and `airlines` gives information about each airline. Create a table of all the flights on February 14th by Virgin America that has columns for the carrier, destination, departure time, and flight duration. Join this table with the airports information for the destination. Notice that because the column for the destination airport code doesn't match up between `flights` and `airports`, you'll have to use the `by=c("TableA.Col"="TableB.Col")` argument where you insert the correct names for `TableA.Col` and `TableB.Col`.
+
+```{r}
+data('flights', package = 'nycflights13')
+data('airports', package = 'nycflights13')
+data('airlines', package = 'nycflights13')
+```
+
+First, I loaded all three data tables from the 'nycflights13' package.
+
+```{r}
+Feb_14 <- flights %>% filter(month == 2 & day == 14)
+
+Virgin_America <- airlines %>% filter(name == "Virgin America")
+
+table1 <- inner_join(Feb_14, Virgin_America) %>% 
+  select(c("carrier", "dest", "dep_time", "air_time"))
+table1
+
+table2 <- inner_join(table1, airports, by = c("dest" = "faa"))
+table2
+```
+
+Then, I extracted just the February 14th rows from the flights data and just the Virgin America carrier row from the airlines data. Next, I joined these two data frames by the carrier column using inner_join() and kept the carrier, destination, departure time, and flight duration columns. Lastly, I joined this data with the airports data by the destination column using inner_join(). In order to join the two data frames, I had to specify the two different column names to join by.
+

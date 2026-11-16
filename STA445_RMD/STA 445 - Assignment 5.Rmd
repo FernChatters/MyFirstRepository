@@ -1,0 +1,191 @@
+---
+title: "STA 445 - Assignment 5"
+author: "Fern Chatters"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(lubridate)
+library(readxl)
+library(dplyr)
+library(tidyverse)
+```
+
+# Exercises
+
+
+## Exercise 1
+
+Convert the following to date or date/time objects.
+
+**a)** September 13, 2010.
+
+```{r}
+mdy('September 13, 2010')
+```
+
+This date was successfully converted to an object using month day year format.
+
+**b)** Sept 13, 2010.
+
+```{r}
+# mdy('Sept 13, 2010')
+```
+This date failed to be converted to an object because R does not know how to interpret Sept. For September, R only understands September or Sep.
+
+**c)** Sep 13, 2010.
+
+```{r}
+mdy('Sep 13, 2010')
+```
+
+This date was successfully converted to an object using month day year format.
+
+**d)** S 13, 2010. Comment on the month abbreviation needs.
+
+```{r}
+# mdy('S 13, 2010')
+```
+
+This date failed to be converted to an object because R does not know how to interpret just the letter S for the month. For September, R only understands September or Sep.
+
+**e)** 07-Dec-1941.
+
+```{r}
+dmy('07-Dec-1941')
+```
+
+This date was successfully converted to an object using day month year format.
+
+**f)** 1-5-1998. Comment on why you might be wrong.
+
+```{r}
+mdy('1-5-1998')
+```
+
+This object may be wrong because this date could either represent January 5th, 1998 or May 1st, 1998. 
+
+**g)** 21-5-1998. Comment on why you know you are correct.
+
+```{r}
+dmy('21-5-1998')
+```
+
+This date can only represent May 21st, 1998 because there are only twelve months, not twenty one.
+
+**h)** 2020-May-5 10:30 am
+
+```{r}
+ymd_hm('2020-May-5 10:30 am')
+```
+
+This date was successfully converted to an object using year month day hours format.
+
+**i)** 2020-May-5 10:30 am PDT (ex Seattle)
+
+```{r}
+ymd_hm('2020-May-5 10:30 am', tz="US/Pacific")
+```
+
+This date was successfully converted to an object using year month day hours format and the US/Pacific time zone.
+
+**j)** 2020-May-5 10:30 am AST (ex Puerto Rico)
+
+```{r}
+ymd_hm('2020-May-5 10:30 am', tz="America/Puerto_Rico")
+```
+
+This date was successfully converted to an object using year month day hours format and the America/Puerto Rico time zone.
+
+
+## Exercise 3
+
+Suppose you have arranged for a phone call to be at 3 pm on May 8, 2025 at Arizona time. However, the recipient will be in Auckland, NZ. What time will it be there? 
+
+```{r}
+phone_call <- ymd_hm('2025-May-8 03:00 pm', tz='US/Arizona')
+with_tz(phone_call, tz='Pacific/Auckland')
+```
+
+If you arranged for a phone call to be at 3 pm on May 8, 2025 in Arizona time, the recipient in Auckland, NZ will answer the call at 10:00 am on May 9th.
+
+
+## Exercise 4
+
+From this book's [GitHub](https://github.com/BuscagliaR/STA_444_v2/) directory, navigate to the `data-raw` directory and then download the `Pulliam_Airport_Weather_Station.csv` data file. (*There are several weather station files. Make sure you get the correct one!*)  There is a `DATE` column (is it of type `date` when you import the data?) as well as the Maximum and Minimum temperature. For the last 5 years of data included in the file, plot the time series of daily maximum temperature with date on the x-axis. Write your code so that it will work if I update the date set. *Hint: Find the maximum date in the data set and then subtract 5 years. Will there be a difference if you use `dyears(5)` vs `years(5)`? Which seems more appropriate here?*
+
+```{r, message = FALSE, warning = FALSE}
+weather_data <- read_csv("../data-raw/Pulliam_Airport_Weather_Station.csv")
+```
+
+```{r}
+class(weather_data$DATE)
+
+max_date <- max(weather_data$DATE)
+max_date
+
+min_date <- max_date - years(5)
+min_date
+
+weather_last_five_years <- weather_data %>% filter(DATE >= min_date)
+head(weather_last_five_years)
+
+ggplot(data = weather_last_five_years, aes(x = DATE, y = TMAX)) +  
+  geom_point(color = "red3") + 
+  labs( title='Daily Maximum Temperature 9/15/2014 - 9/15/2019' ) +
+  labs( x="Date", y="Daily Maximum Temperature (Fahrenheit)" )
+  
+```
+
+First, I imported the data as a csv. Then, I confirmed that the Date variable was of type date when it was imported, which it was. Then, I found the maximum date in the data set and then subtracted five years from that date to find the first date within the last five years. I used the years() function because I only wanted to subtract five years and not worry about any clock discontinuities. Using this range of dates, I filtered my data to only include weather data from the last five years. Lastly, I graphed the time series of the daily maximum temperature for the last five years.
+
+
+## Exercise 5
+
+It turns out there is some interesting periodicity regarding the number of births on particular days of the year.
+
+**a)** Using the `mosaicData` package, load the data set `Births78` which records the number of children born on each day in the United States in 1978. Because this problem is intended to show how to calculate the information using the `date`, remove all the columns *except* `date` and `births`.
+
+```{r}
+data('Births78', package='mosaicData')
+
+Births78_clean <- Births78 %>% select(c("date", "births"))
+head(Births78_clean)
+```
+
+After importing the Births78 data set from the mosaicData package, I removed all of the columns except the "date" and "births" columns using select().
+
+**b)** Graph the number of `births` vs the `date` with date on the x-axis. What stands out to you? Why do you think we have this trend?
+
+```{r}
+ggplot(data = Births78_clean, aes(x = date, y = births)) +  
+  geom_point(color = "lightblue4") + 
+  labs(title = "Births Per Date in 1978",
+       x = "Date", y = "Births")
+```
+
+After graphing the number of births per day in 1978, there seems to be certain months that had more births on average and certain days that had more births on average. Specifically, there seems to have been the most births in the months of February, March, August, September, and December. As far as the days of the week that had the most births, it is impossible to tell which days based on our current graph.
+
+**c)** To test your assumption, we need to figure out the what day of the week each observation is. Use `dplyr::mutate` to add a new column named `dow` that is the day of the week (Monday, Tuesday, etc). This calculation will involve some function in the `lubridate` package and the `date` column.
+
+```{r}
+Births78_clean <- Births78_clean %>% mutate(dow = wday(date, label=TRUE, abbr=FALSE))
+head(Births78_clean)
+```
+
+Using the mutate() function, I added a new column called dow that specifies which day of the week each observation is.
+
+**d)** Plot the data with the point color being determined by the day of the week variable.
+
+```{r}
+ggplot(data = Births78_clean, aes(x = date, y = births, color = dow)) +  
+  geom_point() + 
+  labs(title = "Births Per Date in 1978 by Day of the Week",
+       x = "Date", y = "Births", color = "Day of the Week")
+```
+
+After plotting our scatter plot with the dow variable applied to the color aesthetic, we can easily see that in 1978, there were more babies born on the days of Tuesday, Wednesday, Thursday, and Friday.
+

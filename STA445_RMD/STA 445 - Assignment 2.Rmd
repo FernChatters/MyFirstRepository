@@ -1,0 +1,39 @@
+---
+title: "STA 445 - Assignment 2"
+author: "Fern Chatters"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(readxl)
+library(dplyr)
+```
+
+# Exercises
+
+## Exercise 1
+
+Download from GitHub the data file by clicking on this link:  [Example_5.xls](https://github.com/BuscagliaR/STA_444_v2/raw/refs/heads/main/data-raw/Example_5.xls). Open it in Excel and figure out which sheet of data we should import into R. At the same time figure out how many initial rows need to be skipped. Import the data set into a data frame and show the structure of the imported data using the `str()` command. Make sure that your data has $n=31$ observations and the three columns are appropriately named. If you make any modifications to the data file, comment on those modifications.
+
+```{r}
+cherry.trees <- read_excel("../data-raw/Example_5.xls", sheet = "RawData", 
+                           range = "A5:C36")
+str(cherry.trees)
+```
+
+After downloading the data from an Excel file, I imported the data into R using the name of file, name of the sheet we wanted, and the range of columns we wanted to load in. The data was correctly loaded because it has 31 observations and 3 columns named appropriately.
+
+
+## Exercise 2
+
+Download from GitHub the data file by clicking on this link: [Example_3.xls](https://github.com/BuscagliaR/STA_444_v2/raw/refs/heads/main/data-raw/Example_3.xls). Import the data set into a data frame and show the structure of the imported data using the `tail()` command which shows the last few rows of a data table. Make sure the Tesla values are `NA` where appropriate and that both `-9999` and `NA` are imported as NA values. If you make any modifications to the data file, comment on those modifications.
+
+```{r}
+cars <- read_excel("../data-raw/Example_3.xls", sheet = "data", 
+                   range = "A1:L34", na = c("NA", -9999.00))
+tail(cars)
+```
+
+After downloading the data from an Excel file, I imported the data into R using the name of the data, the name of the sheet I wanted, the range of rows I wanted to load in, and what values I wanted to interpret as missing values.

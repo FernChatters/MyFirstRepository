@@ -1,0 +1,194 @@
+---
+title: "STA 445 - Assignment 4"
+author: "Fern Chatters"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(tidyverse) 
+library(stringr)
+library(refinr) 
+```
+
+# Exercises
+
+## Exercise 1
+
+For the following regular expression, explain in words what it matches on. Then add test strings to demonstrate that it in fact does match on the pattern you claim it does. Make sure that your test set of strings has several examples that match as well as several that do not. Show at least two examples that return TRUE and two examples that return FALSE. *If you copy the Rmarkdown code for these exercises directly from my source pages, make sure to remove the `eval=FALSE` from the R-chunk headers.*
+
+Here is an example of what a solution might look like.
+
+**q)** This regular expression matches: 
+
+Any string that contains the lower-case letter "a".
+
+```{r}
+strings <- c('Adel', 'Mathematics', 'able', 'cheese')
+data.frame( string = strings ) %>%
+  mutate( result = str_detect(string, 'a') )
+```
+
+Please complete the questions below.
+
+**a)** This regular expression matches:  
+
+Any string that contains the lowercase letters 'ab' joined together.
+
+```{r}
+strings <- c("abc", "acb", "ABC", "tab")
+data.frame( string = strings ) %>%
+  mutate( result = str_detect(string, 'ab') )
+```
+
+**b)** This regular expression matches:  
+
+Any string that contains one or both of the lowercase letters "a" and "b" that don't have to be joined together.
+
+```{r}
+strings <- c("abc", "acb", "ABC", "ACB", "acd")
+data.frame( string = strings ) %>%
+  mutate( result = str_detect(string, '[ab]') )
+```
+
+**c)** This regular expression matches:  
+
+Any string that contains one or both of the lowercase letters "a" and "b" that don't have to be joined together, but must be at the beginning of the string.
+
+```{r}
+strings <- c("abc", "ac", "bc", "cab", "ABC")
+data.frame( string = strings ) %>%
+  mutate( result = str_detect(string, '^[ab]') )
+```
+
+**d)** This regular expression matches:  
+
+Any string that contains any one or more digits followed by one of any white space followed by either a lowercase or uppercase "A".
+
+```{r}
+strings <- c("2 a", "123 A", " a", "2A", "2 ", "2 b")
+data.frame( string = strings ) %>%
+  mutate( result = str_detect(string, '\\d+\\s[aA]') )
+```
+
+**e)** This regular expression matches:  
+
+Any string that contains any one or more digits followed by zero or more white spaces followed by either a lowercase or uppercase "A".
+
+```{r}
+strings <- c("2 a", "123A", "23   a", " a", "2 ")
+data.frame( string = strings ) %>%
+  mutate( result = str_detect(string, '\\d+\\s*[aA]') )
+```
+
+**f)** This regular expression matches:  
+
+Any string that contains any character zero or more times.
+
+```{r}
+strings <- c(" ", "abc", "   a", "2", "")
+data.frame( string = strings ) %>%
+  mutate( result = str_detect(string, '.*') )
+```
+
+**g)** This regular expression matches:  
+
+Any string that starts with two of any letter followed by "bar".
+
+```{r}
+strings <- c("aabar", "aabar23", "abar", "23bbbar", "aa23bar")
+data.frame( string = strings ) %>%
+  mutate( result = str_detect(string, '^\\w{2}bar') )
+```
+
+**h)** This regular expression matches:  
+
+Any string that contains "foo" followed by a period followed by "bar" or any string that starts with two of any letter followed by "bar".
+
+```{r}
+strings <- c("aabar", "aabar23", "abar", "23bbbar", "aa23bar",
+             "foo.bar", "23foo.bar2", ".bar", "foobar")
+data.frame( string = strings ) %>%
+  mutate( result = str_detect(string, '(foo\\.bar)|(^\\w{2}bar)') )
+```
+
+
+## Exercise 2
+
+The following file names were used in a camera trap study. The S number represents the site, P is the plot within a site, C is the camera number within the plot, the first string of numbers is the YearMonthDay and the second string of numbers is the HourMinuteSecond.
+
+```{r}
+file.names <- c( 'S123.P2.C10_20120621_213422.jpg',
+                 'S10.P1.C1_20120622_050148.jpg',
+                 'S187.P2.C2_20120702_023501.jpg')
+```
+
+Produce a data frame with columns corresponding to the `site`, `plot`, `camera`, `year`, `month`, `day`, `hour`, `minute`, and `second` for these three file names. So we want to produce code that will create the data frame:
+    
+```{r, eval=FALSE}
+ Site Plot Camera Year Month Day Hour Minute Second
+ S123   P2    C10 2012    06  21   21     34     22
+  S10   P1     C1 2012    06  22   05     01     48
+ S187   P2     C2 2012    07  02   02     35     01
+```
+
+```{r}
+file.names <- data.frame( data = file.names ) %>%
+  mutate(result = str_replace_all(data, pattern='\\.', replacement='_')) %>% 
+  separate(result, sep='_', into=c('Site','Plot','Camera', 'Date', 'Time'), remove=TRUE)
+file.names
+```
+
+```{r}
+file.names$Year <- str_sub(file.names$Date, start=1, end=4)
+file.names$Month <- str_sub(file.names$Date, start=5, end=6)
+file.names$Day <- str_sub(file.names$Date, start=7, end=8)
+file.names$Hour <- str_sub(file.names$Time, start=1, end=2)
+file.names$Minute <- str_sub(file.names$Time, start=3, end=4)
+file.names$Second <- str_sub(file.names$Time, start=5, end=6)
+file.names %>% select( -c("data", "Date", "Time"))
+```
+
+Using the original filenames, I split the data into the 9 different columns by first replacing all of the periods with underscores. Then, I split the data into separate columns by each underscore and then within the Date and Time columns I split each into three separate columns using the indexes of the correct numbers Lastly, I removed the columns I no longer wanted.
+
+
+## Exercise 3
+
+The full text from Lincoln's Gettysburg Address is given below. It has been provided in a form that includes lots of different types of white space. Your goal is to calculate the mean word length of Lincoln's Gettysburg Address! *Note: you may consider 'battle-field' as one word with 11 letters or as two words 'battle' and 'field'. The first option a bit more difficult and technical!*.
+
+```{r}
+Gettysburg <- 'Four score and seven years ago our fathers brought forth on this 
+continent, a new nation, conceived in Liberty, and dedicated to the proposition 
+that all men are created equal.
+
+Now we are engaged in a great civil war, testing whether that nation, or any 
+nation so conceived and so dedicated, can long endure. We are met on a great 
+battle-field of that war. We have come to dedicate a portion of that field, as 
+a final resting place for those who here gave their lives that that nation might 
+live. It is altogether fitting and proper that we should do this.
+
+But, in a larger sense, we can not dedicate -- we can not consecrate -- we can 
+not hallow -- this ground. The brave men, living and dead, who struggled here, 
+have consecrated it, far above our poor power to add or detract. The world will 
+little note, nor long remember what we say here, but it can never forget what 
+they did here. It is for us the living, rather, to be dedicated here to the 
+unfinished work which they who fought here have thus far so nobly advanced. It 
+is rather for us to be here dedicated to the great task remaining before us -- 
+that from these honored dead we take increased devotion to that cause for which 
+they gave the last full measure of devotion -- that we here highly resolve that 
+these dead shall not have died in vain -- that this nation, under God, shall 
+have a new birth of freedom -- and that government of the people, by the people, 
+for the people, shall not perish from the earth.'
+```
+
+```{r}
+Gettysburg <- str_replace_all(Gettysburg, pattern = "\\W+", replacement = " ")
+Gettysburg <- str_split(Gettysburg, pattern='\\s+')
+Gettysburg
+mean(str_length(Gettysburg[[1]]))
+```
+
+Using the full text of Lincoln's Gettysburg Address, I first replaced all one or more non-alphanumeric characters in the speech with just single spaces. Then, I split the speech into a list on any one or more white space. Lastly, I turned the list into a vector and used the mean() function to calculate the mean word length which was 4.21 letters.
+
